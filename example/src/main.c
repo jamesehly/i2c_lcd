@@ -70,27 +70,86 @@ void wait() {
     systick_wait(1000000);
 }
 
-void user_display_message(uint8_t *message, uint8_t length, uint8_t row) {
+void display_message(uint8_t *message, uint8_t length, uint8_t row) {
     i2c_lcd_set_cursor(0, row);
     i2c_lcd_print(message, length);
 }
 
-void user_display_start_screen() {
+void display_start_screen() {
     uint8_t buffer_1[24] = "    HELLO LCD WORLD!    ";
     uint8_t buffer_2[24] = "1234567890!@#$%^&*()_+?=";
-    user_display_message(buffer_1, 24, 0);
-    user_display_message(buffer_2, 24, 1);
+    display_message(buffer_1, 24, 0);
+    display_message(buffer_2, 24, 1);
 }
 
 void i2c_test(void)
 {
-    user_display_start_screen();
+    uint8_t bufferON[2] = "On";
+    uint8_t bufferOFF[3] = "Off";
+
+    // Display Hello World
+    display_start_screen();
+    wait();
+    
+    // Backlight off/on
+    i2c_lcd_clear();
+    uint8_t buffer1[16] = "Backlight OFF/ON";
+    display_message(buffer1, 16, 0);
     wait();
     i2c_lcd_backlight_off();
     wait();
     i2c_lcd_backlight_on();
     wait();
+    
+    // Display off/on
+    i2c_lcd_clear();
+    uint8_t buffer2[14] = "Display OFF/ON";
+    display_message(buffer2, 14, 0);
+    wait();
     i2c_lcd_display_off();
     wait();
     i2c_lcd_display_on();
+    wait();
+    
+    // Cursor off/on 
+    i2c_lcd_clear();
+    uint8_t buffer3[6] = "Cursor";
+    display_message(buffer3, 6, 0);
+    display_message(bufferON, 2, 1);
+    wait();
+    i2c_lcd_cursor_on();
+    wait();
+    wait();
+    display_message(bufferOFF, 3, 1);
+    i2c_lcd_cursor_off();
+    wait();
+    wait();
+    
+    // Blink off/on 
+    i2c_lcd_clear();
+    uint8_t buffer4[5] = "Blink";
+    display_message(buffer4, 5, 0);
+    display_message(bufferON, 2, 1);
+    wait();
+    i2c_lcd_blink_on();
+    wait();
+    wait();
+    display_message(bufferOFF, 3, 1);
+    i2c_lcd_blink_off();
+    wait();
+    wait();
+    
+    // Shift right/left 
+    i2c_lcd_clear();
+    uint8_t buffer5[16] = "Shift RIGHT/LEFT";
+    display_message(buffer5, 16, 0);
+    wait();
+    i2c_lcd_shift_right();
+    i2c_lcd_shift_right();
+    i2c_lcd_shift_right();
+    wait();
+    i2c_lcd_shift_left();
+    i2c_lcd_shift_left();
+    i2c_lcd_shift_left();
+    wait();
 }
