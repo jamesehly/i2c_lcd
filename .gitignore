@@ -54,3 +54,4 @@ dkms.conf
 unused*.txt
 **/out_*/**
 *.uvguix.*
+*.uvoptx

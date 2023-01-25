@@ -23,6 +23,7 @@
 #include "uart.h"
 #include "gpio.h"
 #include "i2c_eeprom.h"
+#include "i2c_lcd.h"
 
 /*
  * DEFINES
@@ -68,9 +69,12 @@
     #define I2C_SDA_PIN             GPIO_PIN_1
 #endif
 
-#define I2C_LCD_ADDRESS 0x27
-
-
+#define I2C_LCD_ADDRESS         0x27
+#define I2C_LCD_NUM_LINES       LCD_TWO_LINES
+#define I2C_LCD_NUM_COLS        24
+#define I2C_LCD_ENTRY_MODE      LCD_ENTRY_INC
+#define I2C_LCD_SHIFT_MODE      LCD_SHIFT_OFF
+#define I2C_LCD_FONT_MODE       LCD_FONT_5x8
 
 /*
  * FUNCTION DECLARATIONS

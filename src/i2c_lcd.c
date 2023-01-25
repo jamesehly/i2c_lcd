@@ -35,40 +35,35 @@
 #include "systick.h"
 #include "i2c_lcd.h"
 
-#define MODE_4BIT 0
-#define MODE_8BIT 1
-#define INST_REGR 0x00
-#define DATA_REGR 0x09
-#define NUM_LINES 2
+/**
+ ****************************************************************************************
+ * DEFAULT CONFIG
+ ****************************************************************************************
+ */
+ 
+#ifndef I2C_LCD_ADDRESS
+#define I2C_LCD_ADDRESS     0x27
+#endif
 
-// SET DDRAM ADDRESS Command
-#define LCD_SET_DDR_ADR_CMD 0x80
+#ifndef I2C_LCD_NUM_LINES
+#define I2C_LCD_NUM_LINES   LCD_TWO_LINES
+#endif
 
-// Clear Command
-#define LCD_CLEAR_CMD       0x01
+#ifndef I2C_LCD_NUM_COLS
+#define I2C_LCD_NUM_COLS    16
+#endif
 
-// Return Home Command
-#define LCD_HOME_CMD        0x02
+#ifndef I2C_LCD_ENTRY_MODE
+#define I2C_LCD_ENTRY_MODE  LCD_ENTRY_INC
+#endif
 
-// Entry Mode Commands
-#define LCD_ENTRY_MODE_CMD  0x05
-#define LCD_INCRMENT        0x02
-#define LCD_DECREMENT       0x00
+#ifndef I2C_LCD_SHIFT_MODE
+#define I2C_LCD_SHIFT_MODE  LCD_SHIFT_OFF
+#endif
 
-// Display Commands
-#define LCD_DISPLAY_CMD     0x08
-#define LCD_DISPLAY_ON      0x04
-#define LCD_CURSOR_ON       0x02
-#define LCD_BLINK_ON        0x01
-
-// Shift Commands
-#define LCD_SHIFT_CMD       0x10
-#define LCD_DISPLAY_SHIFT   0x08 // Shift off == cursor shift
-#define LCD_SHIFT_RIGHT     0x04 // Right off == left shift
-
-// Backlight States
-#define LCD_BACKLIGHT_OFF 0x00
-#define LCD_BACKLIGHT_ON  0x08
+#ifndef I2C_LCD_FONT_MODE
+#define I2C_LCD_FONT_MODE   LCD_FONT_5x8
+#endif
 
 // Private state variables
 uint8_t _backlight          = 0x00;
@@ -77,6 +72,8 @@ uint8_t _cursor             = 0x00;
 uint8_t _blink              = 0x00;
 uint8_t _shift_display      = 0x00;
 uint8_t _shift_right        = LCD_SHIFT_RIGHT;
+uint8_t _entry_mode         = I2C_LCD_ENTRY_MODE;
+uint8_t _shift_mode         = I2C_LCD_SHIFT_MODE;
 
 /*-------------------------------------------------------------------------- */
 /* Private Function Declarations                                             */ 
@@ -92,6 +89,7 @@ void _i2c_send_and_wait_8bit(uint8_t byte, uint32_t us);
 uint8_t _i2c_lcd_display_cmd(void);
 void _i2c_lcd_init(void);
 void _i2c_lcd_command(const uint8_t byte);
+uint8_t _i2c_lcd_entry_mode_cmd(void);
 
 /*-------------------------------------------------------------------------- */
 /* LCD API Functions                                                         */ 
@@ -99,33 +97,48 @@ void _i2c_lcd_command(const uint8_t byte);
 
 /**
  ******************************************************************************
- * 
+ * This is the software initialization procedure as described in the 
+ * HD44780U Instruction manual, pg. 46
  ******************************************************************************
  */
 void i2c_lcd_init() {
     // Wait 50ms for power up (systick is in microseconds 50000us = 50ms)
     systick_wait(50000);
-    _backlight = LCD_BACKLIGHT_OFF;
+    
+    // Set the address of the LCD
+    _i2c_lcd_set_address();
+    
+    // Send command to turn off the backlight (this step is ommitted in the manual)
     uint8_t data[1] = {_backlight};
     i2c_abort_t abort_code;
     i2c_master_transmit_buffer_sync(data, 1, &abort_code, I2C_F_ADD_STOP);
     systick_wait(200);
-    _i2c_lcd_set_address();
-    _i2c_send_and_wait_8bit(0x30, 4500);
-    _i2c_send_and_wait_8bit(0x30, 4500);
-    _i2c_send_and_wait_8bit(0x30, 200);
+    
+    // 8bit mode function set called 3x
+    _i2c_send_and_wait_8bit(0x30, 4500); // send and wait 4.5ms
+    _i2c_send_and_wait_8bit(0x30, 4500); // send and wait 4.5ms
+    _i2c_send_and_wait_8bit(0x30, 200);  // send and wait 200us
+    
+    // Send the command to switch to 4bit mode (in 8bit mode)
     uint8_t mode_4bit[1] = {0x20};
     _i2c_lcd_send(mode_4bit, 1, MODE_8BIT, INST_REGR);
-
+    
+    // Now we are in 4bit mode. Not we are not checking the BF flag so wait times
+    // are hard coded according to the datasheet
     uint8_t data_4bit[2] = { 
         0x28, // function set - 2 lines and 5x8 char set
         0x0C, // display off
      };
     _i2c_lcd_send(data_4bit, 2, MODE_4BIT, INST_REGR);
+    
+    // Clear command takes longer than a normal command
     i2c_lcd_clear();
-    _i2c_lcd_command(0x06); // entry mode set
-    i2c_lcd_home();    
-    i2c_lcd_set_cursor(0,0);
+    
+    // Entry mode set is the final instruction
+    _i2c_lcd_command(_i2c_lcd_entry_mode_cmd()); // entry mode set
+    
+    // This is not in the instructions but I figure its a nice thing to do.
+    i2c_lcd_backlight_on();
 }
 
 void i2c_lcd_print(uint8_t *data, uint8_t length) {
@@ -137,7 +150,6 @@ void i2c_lcd_backlight_off() {
     _i2c_lcd_command(_i2c_lcd_display_cmd());
     systick_wait(200);
 }
-
 
 void i2c_lcd_backlight_on() {
     _backlight = LCD_BACKLIGHT_ON;
@@ -214,6 +226,10 @@ void i2c_lcd_cursor_off() {
 
 static uint8_t _i2c_lcd_display_cmd () {
     return LCD_DISPLAY_CMD | _display | _cursor | _blink;
+}
+
+static uint8_t _i2c_lcd_entry_mode_cmd () {
+    return LCD_ENTRY_MODE_CMD | _entry_mode | _shift_mode;
 }
 
 static void _i2c_lcd_set_address()
