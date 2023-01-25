@@ -25,7 +25,7 @@ The user needs to clone this repository next to the i2c_eeprom example in locate
 
 After cloning you should have 2 folders located in the i2c folder: i2c_eeprom and i2c_lcd. Like this:
 
-![File system location for i2c_lcd driver](https://raw.githubusercontent.com/jamesehly/i2c_lcd/assets/file-system-location.png)
+![File system location for i2c_lcd driver](https://raw.githubusercontent.com/jamesehly/i2c_lcd/main/assets/file-system-location.png)
 
 If the repo is placed in this location, all of the files should be linked correctly.
 
