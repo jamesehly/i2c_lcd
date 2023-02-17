@@ -35,7 +35,7 @@ Open the example project with Keil µvision located at:
 
 Running the example should produce output like this:
 
-https://www.youtube.com/watch?v=h-n-F97LMy8
+https://www.youtube.com/watch?v=79LrwSkXxWQ
 
 ## Hooking up the LCD Module
 

@@ -219,6 +219,14 @@ void i2c_lcd_cursor_off() {
     _i2c_lcd_command(_i2c_lcd_display_cmd());
     systick_wait(200);
 };
+void i2c_lcd_create_char(uint8_t location, uint8_t *charmap) {
+    location &= 0x7; // we only have 8 locations 0-7
+    // This command makes it so we write to the character ram
+	_i2c_lcd_command(LCD_SET_CGR_ADR_CMD | (location << 3));
+	for (int i=0; i<8; i++) {
+		_i2c_lcd_send(&charmap[i], 1, MODE_4BIT, DATA_REGR);
+	}
+}
 
 /*-------------------------------------------------------------------------- */
 /* Internal lower level I2C code                                             */ 

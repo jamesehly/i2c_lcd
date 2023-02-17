@@ -2,7 +2,7 @@
  ****************************************************************************************
  *
  * @file    i2c_lcd.h
- * @version 1.0.0
+ * @version 1.0.1
  * @brief   I2C LCD driver header file.
  *
  * MIT License
@@ -46,6 +46,7 @@
  * CONFIG DEFINES
  ****************************************************************************************
  */
+#define LCD_DRVER_VER       "1.0.1"
 #define LCD_ENTRY_INC       0x02
 #define LCD_ENTRY_DEC       0x00
 #define LCD_SHIFT_ON        0x01  
@@ -69,6 +70,8 @@
 
 // SET DDRAM ADDRESS Command
 #define LCD_SET_DDR_ADR_CMD 0x80
+// SET CGRAM ADDRESS Command
+#define LCD_SET_CGR_ADR_CMD 0x40
 
 // Instruction register commands
 #define LCD_CLEAR_CMD       0x01
@@ -224,5 +227,12 @@ void i2c_lcd_cursor_on(void);
  ****************************************************************************************
  */
 void i2c_lcd_cursor_off(void);
+
+ /**
+ ****************************************************************************************
+ * Creates a custom character
+ ****************************************************************************************
+ */
+void i2c_lcd_create_char(uint8_t,  uint8_t *charmap);
 
 #endif // _I2C_LCD_H_
